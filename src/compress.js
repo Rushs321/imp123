@@ -39,4 +39,3 @@ export async function compressImg(request, reply, imgStream) {
     }
 }
 
-module.exports = compressImg;
