@@ -1,11 +1,11 @@
-import fetch from 'node-fetch';
-import lodash from 'lodash'; // Import lodash as the default import
-import { generateRandomIP, randomUserAgent } from './utils.js';
-import { copyHeaders as copyHdrs } from './copyHeaders.js';
-import { compressImg as applyCompression } from './compress.js';
-import { bypass as performBypass } from './bypass.js';
-import { redirect as handleRedirect } from './redirect.js';
-import { shouldCompress as checkCompression } from './shouldCompress.js';
+import fetch = require('node-fetch');
+import pick = require('lodash').pick; // Directly import the pick function
+import { generateRandomIP, randomUserAgent } from './utils';
+import {copyHdrs} from './copyHeaders';
+import {applyCompression} from './compress';
+import {performBypass} from './bypass';
+import {handleRedirect} from './redirect';
+import {checkCompression} from './shouldCompress';
 
 const viaHeaders = [
     '1.1 example-proxy-service.com (ExampleProxy/1.0)',
@@ -19,14 +19,14 @@ function randomVia() {
     return viaHeaders[index];
 }
 
-export async function processRequest(request, reply) {
+async function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
     if (!url) {
         const ipAddress = generateRandomIP();
         const ua = randomUserAgent();
         const hdrs = {
-            ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
+            ...pick(request.headers, ['cookie', 'dnt', 'referer']),
             'x-forwarded-for': ipAddress,
             'user-agent': ua,
             'via': randomVia(),
@@ -51,7 +51,7 @@ export async function processRequest(request, reply) {
     try {
         const response = await fetch(request.params.url, {
             headers: {
-                ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
+                ...pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
@@ -65,19 +65,22 @@ export async function processRequest(request, reply) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = await response.buffer();
-
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = buffer.length;
+        request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
 
         if (checkCompression(request)) {
+            const buffer = await response.buffer();
             return applyCompression(request, reply, buffer);
         } else {
-            return performBypass(request, reply, buffer);
+            // Directly pipe the response stream to the client
+            reply.header('content-length', request.params.originSize);
+            return response.body.pipe(reply.raw);
         }
     } catch (err) {
         return handleRedirect(request, reply);
     }
 }
+
+module.exports = processRequest;
