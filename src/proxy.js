@@ -1,5 +1,5 @@
-import fetch = require('node-fetch');
-import pick = require('lodash').pick; // Directly import the pick function
+import fetch from 'node-fetch';
+import lodash from 'lodash'; // Directly import the pick function
 import { generateRandomIP, randomUserAgent } from './utils';
 import {copyHdrs} from './copyHeaders';
 import {applyCompression} from './compress';
@@ -51,7 +51,7 @@ async function processRequest(request, reply) {
     try {
         const response = await fetch(request.params.url, {
             headers: {
-                ...pick(request.headers, ['cookie', 'dnt', 'referer']),
+                ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
