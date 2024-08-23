@@ -19,7 +19,7 @@ function randomVia() {
     return viaHeaders[index];
 }
 
-async function processRequest(request, reply) {
+export async function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
     if (!url) {
