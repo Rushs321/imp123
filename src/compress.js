@@ -1,13 +1,13 @@
-import sharp from 'sharp';
-import { redirect } from './redirect.js';
+import sharp from'sharp';
+import {redirect} from './redirect.js';
 
-export async function compressImg(request, reply, imgData) {
+export async function compressImg(request, reply, imgStream) {
     const { webp, grayscale, quality, originSize } = request.params;
     const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
         // Create the sharp instance and start the pipeline
-        let sharpInstance = sharp(imgData)
+        const sharpStream = sharp()
             .grayscale(grayscale) // Apply grayscale conditionally
             .toFormat(imgFormat, {
                 quality, // Use the provided quality
@@ -16,8 +16,15 @@ export async function compressImg(request, reply, imgData) {
                 chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
             });
 
-        // Convert to buffer and get info
-        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
+        // Pipe the input stream through the sharp instance
+        const { data, info } = await new Promise((resolve, reject) => {
+            const buffers = [];
+            imgStream.pipe(sharpStream)
+                .on('data', chunk => buffers.push(chunk))
+                .on('end', () => resolve(Buffer.concat(buffers)))
+                .on('info', resolve)
+                .on('error', reject);
+        });
 
         // Send response with appropriate headers
         reply
@@ -31,3 +38,5 @@ export async function compressImg(request, reply, imgData) {
         return redirect(request, reply);
     }
 }
+
+module.exports = compressImg;
