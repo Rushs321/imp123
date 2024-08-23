@@ -1,11 +1,11 @@
 import fetch from 'node-fetch';
 import lodash from 'lodash'; // Directly import the pick function
-import { generateRandomIP, randomUserAgent } from './utils';
-import {copyHdrs} from './copyHeaders';
-import {applyCompression} from './compress';
-import {performBypass} from './bypass';
-import {handleRedirect} from './redirect';
-import {checkCompression} from './shouldCompress';
+import { generateRandomIP, randomUserAgent } from './utils.js';
+import {copyHdrs} from './copyHeaders.js';
+import {applyCompression} from './compress.js';
+import {performBypass} from './bypass.js';
+import {handleRedirect} from './redirect.js';
+import {checkCompression} from './shouldCompress.js';
 
 const viaHeaders = [
     '1.1 example-proxy-service.com (ExampleProxy/1.0)',
