@@ -84,4 +84,3 @@ export async function processRequest(request, reply) {
     }
 }
 
-module.exports = processRequest;
